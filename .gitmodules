@@ -1,0 +1,3 @@
+[submodule "external/lbg-desc-forecast"]
+	path = external/lbg-desc-forecast
+	url = https://github.com/jfcrenshaw/lbg-desc-forecast.git
