@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from derivkit import ForecastKit
-import sys
-sys.path.insert(0, "/Users/bsherwin/Documents/CMBxLBG/lbg-desc-forecast/src")
+#import sys
+#sys.path.insert(0, "/Users/niko/Documents/Research/lbg-desc-forecast-main
+# /src")
 from lbg_tools import TomographicBin
 from lbg_desc_forecast.forecaster import Forecaster
 from lbg_desc_forecast.cosmo_factories import MainCosmology
