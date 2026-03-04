@@ -1,0 +1,81 @@
+paths:
+  lbg_desc_forecast_src: "external/lbg-desc-forecast/src"
+  outdir: "outputs"
+
+common:
+  year: 10
+  contamination: 0.1
+  petri_y10:
+    u: { f_interlopers: 0.07 }
+    g: { f_interlopers: 0.10 }
+    r: { f_interlopers: 0.03 }
+
+defaults:
+  theta_round_decimals: 6
+
+  param_groups:
+    bias: &bias_params [bu, bg, br, bu_int, bg_int, br_int]
+    cosmo_base: &cosmo_base [Omega_M, sigma8, Omega_b, h, n_s]
+
+  # Canonical defaults (keys = param names)
+  theta0:
+    Omega_M: 0.3156
+    sigma8: 0.831
+    Omega_b: 0.0491685
+    h: 0.6727
+    n_s: 0.9645
+    m_nu: 0.06
+    w0: -1.0
+    wa: 0.0
+
+    bu: 2.16
+    bg: 3.33
+    br: 4.86
+    bu_int: 1.49
+    bg_int: 1.69
+    br_int: 1.79
+
+  # Gaussian priors: Fisher prior term is diag(1/sigma^2)
+  priors:
+    type: gaussian
+    sigma:
+      Omega_M: 0.15
+      sigma8: 0.2
+      n_s: 0.1
+      w0: 0.5
+      wa: 1.3
+      Omega_b: 0.005
+      h: 0.125
+      m_nu: 0.10
+      # Galaxy bias: 10% fractional priors
+      bu: 0.216  # 0.1 * 2.16
+      bg: 0.333  # 0.1 * 3.33
+      br: 0.486  # 0.1 * 4.86
+      bu_int: 0.149  # 0.1 * 1.49
+      bg_int: 0.169  # 0.1 * 1.69
+      br_int: 0.179  # 0.1 * 1.79
+
+runs:
+  test_om_s8:
+    cosmo_params: [Omega_M, sigma8]
+
+  lcdm:
+    cosmo_params: *cosmo_base
+
+  neutrino:
+    cosmo_params: [Omega_M, sigma8, Omega_b, h, n_s, m_nu]
+
+  w0wa:
+    cosmo_params: [Omega_M, sigma8, Omega_b, h, n_s, w0, wa]
+
+scenarios:
+  dz: { values: [0.01, 0.02, 0.03, 0.04, 0.05, 0.1], bands: [u, g, r] }
+  dz_interlopers: { values: [0.01, 0.02, 0.03, 0.04, 0.05, 0.1],
+                    bands: [u, g, r] }
+  stretch: { values: [1.01, 1.025, 1.05, 1.1], bands: [u, g, r] }
+  stretch_interlopers: { values: [1.01, 1.025, 1.05, 1.1], bands: [u, g, r] }
+  f_interlopers:
+    custom:
+      u: [0.05, 0.06, 0.065, 0.075, 0.08, 0.09]
+      g: [0.08, 0.09, 0.095, 0.105, 0.11, 0.12]
+      r: [0.01, 0.02, 0.025, 0.035, 0.04, 0.05]
