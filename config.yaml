@@ -1,24 +1,62 @@
+# ============================================================
+# LBG forecast configuration for Fisher + Fisher-bias scripts
+#
+# Top-level blocks:
+#   - paths: where the forecasting code lives + where outputs go
+#   - common: survey / sample settings shared by all runs
+#   - defaults: fiducial parameter values + priors + parameter group aliases
+#   - runs: named parameter subsets to forecast (each becomes outputs/<run>/)
+#   - scenarios: systematic “what-if” grids for Fisher-bias (dz, stretch, etc.)
+#   - fisher_bias: which runs/scenarios to evaluate in run_fisher_bias.py
+# ============================================================
+
+# -----------------------------
+# File locations
+# -----------------------------
 paths:
+  # Local checkout of lbg-desc-forecast (added to sys.path by inject_forecast_src)
   lbg_desc_forecast_src: "external/lbg-desc-forecast/src"
+
+  # Root output directory; each run writes to outputs/<run_name>/
   outdir: "outputs"
 
+# -----------------------------
+# Shared survey/sample settings
+# -----------------------------
 common:
+  # Survey year / depth scenario used by get_lbg_mappers(year, ...)
   year: 10
+
+  # Global contamination fraction (passed into get_lbg_mappers)
   contamination: 0.1
+
+  # Petri interloper fractions used as fiducial f_interlopers per band
+  # (these set mapper.f_interlopers in configure_mappers)
   petri_y10:
     u: { f_interlopers: 0.07 }
     g: { f_interlopers: 0.10 }
     r: { f_interlopers: 0.03 }
 
+# -----------------------------
+# Fiducials, group aliases, priors
+# -----------------------------
 defaults:
+
+  # Round fiducial theta0 values to reduce tiny floating differences
   theta_round_decimals: 6
 
+  # YAML anchors for convenience when defining runs below
   param_groups:
+    # Nuisance parameters (galaxy bias for main + interloper samples)
     bias: &bias_params [bu, bg, br, bu_int, bg_int, br_int]
+
+    # Base cosmology set used in LCDM-like runs
     cosmo_base: &cosmo_base [Omega_M, sigma8, Omega_b, h, n_s]
 
-  # Canonical defaults (keys = param names)
+  # Fiducial parameter point used to build theta0 vectors for all runs
   theta0:
+
+    # --- Cosmology ---
     Omega_M: 0.3156
     sigma8: 0.831
     Omega_b: 0.0491685
@@ -28,17 +66,23 @@ defaults:
     w0: -1.0
     wa: 0.0
 
+    # --- Galaxy bias (per-band) ---
+    # b_u, b_g, b_r for the main samples
     bu: 2.16
     bg: 3.33
     br: 4.86
+
+    # b_u^int, b_g^int, b_r^int for interloper samples
     bu_int: 1.49
     bg_int: 1.69
     br_int: 1.79
 
-  # Gaussian priors: Fisher prior term is diag(1/sigma^2)
+  # Gaussian priors added to the likelihood Fisher (diagonal 1/sigma^2)
   priors:
     type: gaussian
     sigma:
+
+      # --- Cosmology priors ---
       Omega_M: 0.15
       sigma8: 0.2
       n_s: 0.1
@@ -47,35 +91,106 @@ defaults:
       Omega_b: 0.005
       h: 0.125
       m_nu: 0.10
-      # Galaxy bias: 10% fractional priors
-      bu: 0.216  # 0.1 * 2.16
-      bg: 0.333  # 0.1 * 3.33
-      br: 0.486  # 0.1 * 4.86
-      bu_int: 0.149  # 0.1 * 1.49
-      bg_int: 0.169  # 0.1 * 1.69
-      br_int: 0.179  # 0.1 * 1.79
 
+      # --- Galaxy bias priors ---
+      # (here: 10% fractional priors around the fiducial values)
+      bu: 0.216
+      bg: 0.333
+      br: 0.486
+      bu_int: 0.149
+      bg_int: 0.169
+      br_int: 0.179
+
+# -----------------------------
+# Run definitions (parameter subsets)
+# -----------------------------
 runs:
-  test_om_s8:
-    cosmo_params: [Omega_M, sigma8]
 
+  # Minimal 2-parameter run (no nuisance parameters)
+  # I used this for testing the code
+  om_s8:
+    cosmo_params: [Omega_M, sigma8]
+    bias_params: []
+
+  # Base LCDM + galaxy bias nuisance parameters
   lcdm:
     cosmo_params: *cosmo_base
+    bias_params: *bias_params
 
-  neutrino:
+  # LCDM + massive neutrinos + galaxy bias nuisance parameters
+  lcdm_nu:
     cosmo_params: [Omega_M, sigma8, Omega_b, h, n_s, m_nu]
+    bias_params: *bias_params
 
-  w0wa:
+  # LCDM + (w0, wa) dark energy + galaxy bias nuisance parameters
+  lcdm_w0wa:
     cosmo_params: [Omega_M, sigma8, Omega_b, h, n_s, w0, wa]
+    bias_params: *bias_params
 
+  # Reduced cosmology with dark energy (no nuisance parameters)
+  om_s8_w0wa:
+    cosmo_params: [Omega_M, sigma8, w0, wa]
+    bias_params: []
+
+  # Reduced cosmology with dark energy + neutrinos (no nuisance parameters)
+  om_s8_w0wa_nu:
+    cosmo_params: [Omega_M, sigma8, w0, wa, m_nu]
+    bias_params: []
+
+# ------------------------------------------------------------
+# Systematic scenario grids (used by run_fisher_bias.py)
+#
+# Each entry expands into a list of cases (param, band, val).
+# For dz / stretch style systematics: values + bands are combined.
+# For f_interlopers: custom per-band value lists are used.
+# ------------------------------------------------------------
 scenarios:
-  dz: { values: [0.01, 0.02, 0.03, 0.04, 0.05, 0.1], bands: [u, g, r] }
-  dz_interlopers: { values: [0.01, 0.02, 0.03, 0.04, 0.05, 0.1],
-                    bands: [u, g, r] }
-  stretch: { values: [1.01, 1.025, 1.05, 1.1], bands: [u, g, r] }
-  stretch_interlopers: { values: [1.01, 1.025, 1.05, 1.1], bands: [u, g, r] }
+
+  dz:
+    values: [0.01, 0.02, 0.03, 0.04, 0.05, 0.10]
+    bands: [u, g, r]
+
+  dz_interlopers:
+    values: [0.01, 0.02, 0.03, 0.04, 0.05, 0.10]
+    bands: [u, g, r]
+
+  stretch:
+    values: [1.01, 1.025, 1.05, 1.10]
+    bands: [u, g, r]
+
+  stretch_interlopers:
+    values: [1.01, 1.025, 1.05, 1.10]
+    bands: [u, g, r]
+
+  # Interloper fraction f_interlopers has a different fiducial per band,
+  # so we define per-band test values directly.
   f_interlopers:
     custom:
       u: [0.05, 0.06, 0.065, 0.075, 0.08, 0.09]
       g: [0.08, 0.09, 0.095, 0.105, 0.11, 0.12]
       r: [0.01, 0.02, 0.025, 0.035, 0.04, 0.05]
+
+# ------------------------------------------------------------
+# Fisher-bias driver settings (run_fisher_bias.py)
+# ------------------------------------------------------------
+fisher_bias:
+
+  # Which forecast runs to load Fisher artifacts from and evaluate bias shifts for
+  runs:
+    - om_s8
+    - lcdm
+    - lcdm_w0wa
+    - om_s8_w0wa
+    - om_s8_w0wa_nu
+    - lcdm_nu
+    - lcdm_w0wa_nu
+
+  # Which scenario set to expand from the 'scenarios' block
+  # options: dz, dz_interlopers, stretch, stretch_interlopers, f_interlopers, all
+  scenario_set: dz
+
+  # Derivative method used inside the Fisher-bias projection step
+  method: finite
+
+  # If true: produce GetDist triangle plots per scenario (where supported)
+  make_plots: true
