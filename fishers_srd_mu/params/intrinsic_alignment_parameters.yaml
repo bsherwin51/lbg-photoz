@@ -1,0 +1,46 @@
+---
+#  Niko Sarcevic
+#  nikolina.sarcevic@gmail.com
+#  github.com/nikosarcevic
+#  ----------
+
+#  Fiducial values of the intrinsic alignment parameters.
+#  For more information check Krause, Eifler and Blazek (KEB)
+#  (see https://arxiv.org/abs/1506.08730), LSST DESC SRD
+#  paper (https://arxiv.org/abs/1809.01669) or CosmoLike
+#  https://github.com/CosmoLike/DESC_SRD. Note that some
+#  parameter choices in SRD are not the same as in the
+#  Krause, Eifler and Blazek paper.
+
+#  Intrinsic alignment fiducial values used in the analysis
+fiducial_values:
+  a_0: 5.92 # Intrinsic alignment amplitude prefactor.
+  beta: 1.1 # Intrinsic alignment power law index.
+  eta_low_z: -0.47  # Exponent for low redshifts (eq. 7 and 8 in KEB).
+  eta_high_z: 0.0 # Exponent for high redshifts (eq. 7 and 8 in KEB).
+
+#  IA parameters sigmas used in the analysis
+#  Gaussian prior = 1 / sigma^2
+sigmas:
+  a_0: 2.5
+  beta: 1
+  eta_low_z: 1.5
+  eta_high_z: 0.5
+
+misc_parameters:
+  low_z_pivot: 0.3
+  high_z_pivot: 0.75
+
+srd_fidvals:
+  a_0: 5. # Intrinsic alignment amplitude prefactor.
+  beta: 1.  # Intrinsic alignment power law index.
+  eta_low_z: 0.  # Exponent for low redshifts (eq. 7 and 8 in KEB).
+  eta_high_z: 0. # Exponent for high redshifts (eq. 7 and 8 in KEB).
+
+srd_sigmas:
+  a_0: 3.9
+  beta: 1.6
+  eta_low_z: 2.3
+  eta_high_z: 0.8
+
+...  
